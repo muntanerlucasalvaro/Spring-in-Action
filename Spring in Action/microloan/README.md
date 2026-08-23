@@ -1,11 +1,11 @@
 # MicroLoan
 
-App para gestionar micropréstamos personales de una pequeña financiera. Sirve para dar de alta solicitantes, registrar sus solicitudes de préstamo, y llevarlas a través de un proceso de revisión hasta que se aprueban o se rechazan. La idea es sustituir la hoja de Excel que usan ahora, donde se cuelan aprobaciones que no deberían pasar y no hay forma de saber en qué estado está cada solicitud.
+App to manage personal microloans for a small lender. It lets you register applicants, create their loan applications, and move them through a review process until they're approved or rejected. The idea is to replace the Excel sheet they use now, where approvals that shouldn't go through slip in and there's no way to know what state each application is in.
 
-## Compilar
+## Build
 
     mvn clean package
 
-## Ejecutar
+## Run
 
     java -jar target/microloan-1.0-SNAPSHOT.jar
