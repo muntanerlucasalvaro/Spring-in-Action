@@ -14,6 +14,15 @@ public class LoanApplication {
     private final LocalDate createdAt;
 
     public LoanApplication(int id, Applicant applicant, BigDecimal amount, int termMonths, String purpose) {
+        // r1
+        if (amount.compareTo(new BigDecimal("500")) < 0 || amount.compareTo(new BigDecimal("15000")) > 0) {
+            throw new InvalidLoanException("Amount must be between 500 and 15000");
+        }
+        // r2
+        if (termMonths < 3 || termMonths > 36) {
+            throw new InvalidLoanException("Term months must be between 3 and 36");
+        }
+
         this.id = id;
         this.applicant = applicant;
         this.amount = amount;
@@ -49,6 +58,11 @@ public class LoanApplication {
 
     public LocalDate getCreatedAt() {
         return createdAt;
+    }
+
+    // LoanService
+    public void setStatus(LoanStatus status) {
+        this.status = status;
     }
 
 }
