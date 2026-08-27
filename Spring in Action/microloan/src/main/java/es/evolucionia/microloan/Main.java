@@ -129,14 +129,103 @@ public class Main {
                     break;
 
                 case 4:
+                    System.out.print("Enter application ID to review: ");
+                    int applicationIdToReview = sc.nextInt();
+                    sc.nextLine();
+
+                    LoanApplication appToReview = null;
+                    for (LoanApplication app : applications) {
+                        if (app.getId() == applicationIdToReview) {
+                            appToReview = app;
+                            break;
+                        }
+                    }
+
+                    if (appToReview != null) {
+                        try {
+                            loanService.changeStatus(appToReview, LoanStatus.UNDER_REVIEW);
+                            System.out.println("Loan application under review: " + appToReview.getId());
+                        } catch (InvalidLoanException e) {
+                            System.out.println(e.getMessage());
+                        }
+                    } else {
+                        System.out.println("Application not found");
+                    }
                     break;
                 case 5:
+                    System.out.print("Enter application ID to approve: ");
+                    int applicationIdToApprove = sc.nextInt();
+                    sc.nextLine();
+
+                    LoanApplication appToApprove = null;
+                    for (LoanApplication app : applications) {
+                        if (app.getId() == applicationIdToApprove) {
+                            appToApprove = app;
+                            break;
+                        }
+                    }
+
+                    if (appToApprove != null) {
+                        try {
+                            loanService.changeStatus(appToApprove, LoanStatus.APPROVED);
+                            System.out.println("Loan application approved: " + appToApprove.getId());
+                        } catch (InvalidLoanException e) {
+                            System.out.println(e.getMessage());
+                        }
+                    } else {
+                        System.out.println("Application not found");
+                    }
                     break;
                 case 6:
+                    System.out.print("Enter application ID to reject: ");
+                    int applicationIdToReject = sc.nextInt();
+                    sc.nextLine();
+
+                    LoanApplication appToReject = null;
+                    for (LoanApplication app : applications) {
+                        if (app.getId() == applicationIdToReject) {
+                            appToReject = app;
+                            break;
+                        }
+                    }
+
+                    if (appToReject != null) {
+                        try {
+                            loanService.changeStatus(appToReject, LoanStatus.REJECTED);
+                            System.out.println("Loan application rejected: " + appToReject.getId());
+                        } catch (InvalidLoanException e) {
+                            System.out.println(e.getMessage());
+                        }
+                    } else {
+                        System.out.println("Application not found");
+                    }
                     break;
                 case 7:
+                    for (LoanApplication app : applications) {
+                        System.out.println("ID: " + app.getId() + " | Applicant: " + app.getApplicant().getFullName()
+                                + " | Amount: " + app.getAmount() + " | Status: " + app.getStatus());
+                    }
                     break;
                 case 8:
+                    long pending = applications.stream()
+                            .filter(app -> app.getStatus() == LoanStatus.SUBMITTED
+                                    || app.getStatus() == LoanStatus.UNDER_REVIEW)
+                            .count();
+                    System.out.println("Pending review: " + pending);
+
+                    BigDecimal totalApproved = applications.stream()
+                            .filter(app -> app.getStatus() == LoanStatus.APPROVED)
+                            .map(app -> app.getAmount())
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    System.out.println("Total approved: " + totalApproved);
+
+                    for (Applicant a : applicants) {
+                        boolean hasApplication = applications.stream()
+                                .anyMatch(app -> app.getApplicant().equals(a));
+                        if (!hasApplication) {
+                            System.out.println("Never applied: " + a.getFullName());
+                        }
+                    }
                     break;
                 case 0:
                     on = false;
