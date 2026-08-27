@@ -4,7 +4,14 @@ import java.math.BigDecimal;
 
 public class LoanService {
 
+    private final LoanRepository repository;
+
+    public LoanService(LoanRepository repository) {
+        this.repository = repository;
+    }
+
     public void changeStatus(LoanApplication application, LoanStatus newStatus) {
+
         LoanStatus current = application.getStatus();
 
         // r5
@@ -28,9 +35,7 @@ public class LoanService {
             if (amount.compareTo(maxAllowedAmount) > 0) {
                 throw new InvalidLoanException("Loan amount exceeds 4 times the applicant's monthly income");
             }
-
         }
         application.setStatus(newStatus);
     }
-
 }

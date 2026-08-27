@@ -2,17 +2,16 @@ package es.evolucionia.microloan;
 
 import java.util.HashSet;
 import java.util.InputMismatchException;
+import java.util.Optional;
 import java.util.Set;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
     private static Set<Applicant> applicants = new HashSet<>();
-    private static List<LoanApplication> applications = new ArrayList<>();
-    private static LoanService loanService = new LoanService();
+    private static LoanRepository loanRepository = new InMemoryLoanRepository();
+    private static LoanService loanService = new LoanService(loanRepository);
 
     public static void main(String[] args) {
         System.out.println("MicroLoan starting...");
@@ -20,7 +19,6 @@ public class Main {
         Scanner sc = new Scanner(System.in);
         boolean on = true;
 
-        // Main loop
         while (on) {
             System.out.println("1 add applicant");
             System.out.println("2 create application");
@@ -59,10 +57,10 @@ public class Main {
 
                     System.out.print("Enter monthly income: ");
                     BigDecimal monthlyIncome = sc.nextBigDecimal();
+                    sc.nextLine();
 
                     Applicant applicant = new Applicant(applicantId, fullName, email, monthlyIncome);
                     applicants.add(applicant);
-                    sc.nextLine();
 
                     System.out.println("Applicant added: " + applicant.getFullName());
                     break;
@@ -92,14 +90,13 @@ public class Main {
                         System.out.print("Enter purpose: ");
                         String purpose = sc.nextLine();
 
-                        LoanApplication application = new LoanApplication(applications.size() + 1, found, amount,
-                                termMonths, purpose);
-                        applications.add(application);
+                        LoanApplication application = new LoanApplication(loanRepository.findAll().size() + 1, found,
+                                amount, termMonths, purpose);
+                        loanRepository.save(application);
 
                         System.out.println("Loan application created with ID: " + application.getId());
                     } else {
                         System.out.println("Applicant not found");
-
                     }
                     break;
 
@@ -108,15 +105,9 @@ public class Main {
                     int applicationId = sc.nextInt();
                     sc.nextLine();
 
-                    LoanApplication appToSubmit = null;
-                    for (LoanApplication app : applications) {
-                        if (app.getId() == applicationId) {
-                            appToSubmit = app;
-                            break;
-                        }
-                    }
-
-                    if (appToSubmit != null) {
+                    Optional<LoanApplication> resultSubmit = loanRepository.findById(applicationId);
+                    if (resultSubmit.isPresent()) {
+                        LoanApplication appToSubmit = resultSubmit.get();
                         try {
                             loanService.changeStatus(appToSubmit, LoanStatus.SUBMITTED);
                             System.out.println("Loan application submitted: " + appToSubmit.getId());
@@ -133,15 +124,9 @@ public class Main {
                     int applicationIdToReview = sc.nextInt();
                     sc.nextLine();
 
-                    LoanApplication appToReview = null;
-                    for (LoanApplication app : applications) {
-                        if (app.getId() == applicationIdToReview) {
-                            appToReview = app;
-                            break;
-                        }
-                    }
-
-                    if (appToReview != null) {
+                    Optional<LoanApplication> resultReview = loanRepository.findById(applicationIdToReview);
+                    if (resultReview.isPresent()) {
+                        LoanApplication appToReview = resultReview.get();
                         try {
                             loanService.changeStatus(appToReview, LoanStatus.UNDER_REVIEW);
                             System.out.println("Loan application under review: " + appToReview.getId());
@@ -152,20 +137,15 @@ public class Main {
                         System.out.println("Application not found");
                     }
                     break;
+
                 case 5:
                     System.out.print("Enter application ID to approve: ");
                     int applicationIdToApprove = sc.nextInt();
                     sc.nextLine();
 
-                    LoanApplication appToApprove = null;
-                    for (LoanApplication app : applications) {
-                        if (app.getId() == applicationIdToApprove) {
-                            appToApprove = app;
-                            break;
-                        }
-                    }
-
-                    if (appToApprove != null) {
+                    Optional<LoanApplication> resultApprove = loanRepository.findById(applicationIdToApprove);
+                    if (resultApprove.isPresent()) {
+                        LoanApplication appToApprove = resultApprove.get();
                         try {
                             loanService.changeStatus(appToApprove, LoanStatus.APPROVED);
                             System.out.println("Loan application approved: " + appToApprove.getId());
@@ -176,20 +156,15 @@ public class Main {
                         System.out.println("Application not found");
                     }
                     break;
+
                 case 6:
                     System.out.print("Enter application ID to reject: ");
                     int applicationIdToReject = sc.nextInt();
                     sc.nextLine();
 
-                    LoanApplication appToReject = null;
-                    for (LoanApplication app : applications) {
-                        if (app.getId() == applicationIdToReject) {
-                            appToReject = app;
-                            break;
-                        }
-                    }
-
-                    if (appToReject != null) {
+                    Optional<LoanApplication> resultReject = loanRepository.findById(applicationIdToReject);
+                    if (resultReject.isPresent()) {
+                        LoanApplication appToReject = resultReject.get();
                         try {
                             loanService.changeStatus(appToReject, LoanStatus.REJECTED);
                             System.out.println("Loan application rejected: " + appToReject.getId());
@@ -200,33 +175,36 @@ public class Main {
                         System.out.println("Application not found");
                     }
                     break;
+
                 case 7:
-                    for (LoanApplication app : applications) {
+                    for (LoanApplication app : loanRepository.findAll()) {
                         System.out.println("ID: " + app.getId() + " | Applicant: " + app.getApplicant().getFullName()
                                 + " | Amount: " + app.getAmount() + " | Status: " + app.getStatus());
                     }
                     break;
+
                 case 8:
-                    long pending = applications.stream()
+                    long pending = loanRepository.findAll().stream()
                             .filter(app -> app.getStatus() == LoanStatus.SUBMITTED
                                     || app.getStatus() == LoanStatus.UNDER_REVIEW)
                             .count();
                     System.out.println("Pending review: " + pending);
 
-                    BigDecimal totalApproved = applications.stream()
+                    BigDecimal totalApproved = loanRepository.findAll().stream()
                             .filter(app -> app.getStatus() == LoanStatus.APPROVED)
                             .map(app -> app.getAmount())
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
                     System.out.println("Total approved: " + totalApproved);
 
                     for (Applicant a : applicants) {
-                        boolean hasApplication = applications.stream()
+                        boolean hasApplication = loanRepository.findAll().stream()
                                 .anyMatch(app -> app.getApplicant().equals(a));
                         if (!hasApplication) {
                             System.out.println("Never applied: " + a.getFullName());
                         }
                     }
                     break;
+
                 case 0:
                     on = false;
                     break;
