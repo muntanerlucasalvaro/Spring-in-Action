@@ -32,6 +32,19 @@ public class LoanApplication {
         this.createdAt = LocalDate.now();
     }
 
+    // new constructor for to rebuild an existing application from storage, skips
+    // R1/R2 since it's already valid
+    public LoanApplication(int id, Applicant applicant, BigDecimal amount, int termMonths, String purpose,
+            LoanStatus status, LocalDate createdAt) {
+        this.id = id;
+        this.applicant = applicant;
+        this.amount = amount;
+        this.termMonths = termMonths;
+        this.purpose = purpose;
+        this.status = status;
+        this.createdAt = createdAt;
+    }
+
     public int getId() {
         return id;
     }
@@ -60,7 +73,6 @@ public class LoanApplication {
         return createdAt;
     }
 
-    // LoanService
     public void setStatus(LoanStatus status) {
         this.status = status;
     }
