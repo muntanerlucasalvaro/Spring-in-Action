@@ -38,4 +38,9 @@ public class InMemoryLoanRepository implements LoanRepository {
         }
         return result;
     }
+
+    @Override
+    public void updateStatus(LoanApplication application) {
+
+    }
 }
