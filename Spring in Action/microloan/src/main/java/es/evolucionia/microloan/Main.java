@@ -111,6 +111,7 @@ public class Main {
                         LoanApplication appToSubmit = resultSubmit.get();
                         try {
                             loanService.changeStatus(appToSubmit, LoanStatus.SUBMITTED);
+                            loanRepository.updateStatus(appToSubmit);
                             System.out.println("Loan application submitted: " + appToSubmit.getId());
                         } catch (InvalidLoanException e) {
                             System.out.println(e.getMessage());
@@ -130,6 +131,7 @@ public class Main {
                         LoanApplication appToReview = resultReview.get();
                         try {
                             loanService.changeStatus(appToReview, LoanStatus.UNDER_REVIEW);
+                            loanRepository.updateStatus(appToReview);
                             System.out.println("Loan application under review: " + appToReview.getId());
                         } catch (InvalidLoanException e) {
                             System.out.println(e.getMessage());
@@ -147,11 +149,20 @@ public class Main {
                     Optional<LoanApplication> resultApprove = loanRepository.findById(applicationIdToApprove);
                     if (resultApprove.isPresent()) {
                         LoanApplication appToApprove = resultApprove.get();
+                        LoanStatus oldStatus = appToApprove.getStatus();
                         try {
                             loanService.changeStatus(appToApprove, LoanStatus.APPROVED);
+
+                            System.out.print("Simulate a failure to test rollback? (yes/no): ");
+                            boolean simulateFailure = sc.nextLine().equalsIgnoreCase("yes");
+
+                            ((JdbcLoanRepository) loanRepository).approveWithHistory(appToApprove, oldStatus,
+                                    simulateFailure);
                             System.out.println("Loan application approved: " + appToApprove.getId());
                         } catch (InvalidLoanException e) {
                             System.out.println(e.getMessage());
+                        } catch (RuntimeException e) {
+                            System.out.println("Transaction failed, nothing was saved: " + e.getMessage());
                         }
                     } else {
                         System.out.println("Application not found");
@@ -168,6 +179,7 @@ public class Main {
                         LoanApplication appToReject = resultReject.get();
                         try {
                             loanService.changeStatus(appToReject, LoanStatus.REJECTED);
+                            loanRepository.updateStatus(appToReject);
                             System.out.println("Loan application rejected: " + appToReject.getId());
                         } catch (InvalidLoanException e) {
                             System.out.println(e.getMessage());

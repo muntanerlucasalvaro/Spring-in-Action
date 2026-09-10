@@ -12,4 +12,6 @@ public interface LoanRepository {
     List<LoanApplication> findAll();
 
     List<LoanApplication> findByStatus(LoanStatus status);
+
+    void updateStatus(LoanApplication application);
 }

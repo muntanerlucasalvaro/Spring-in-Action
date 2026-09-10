@@ -15,6 +15,14 @@ CREATE TABLE loan_applications (
     created_at DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
+CREATE TABLE status_history (
+    id SERIAL PRIMARY KEY,
+    application_id INTEGER NOT NULL REFERENCES loan_applications(id),
+    old_status VARCHAR(20),
+    new_status VARCHAR(20) NOT NULL,
+    changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX idx_loan_applications_status ON loan_applications(status);
 
 -- Sample data below, just kept here so it's visible in the repo, not meant to run again
@@ -88,7 +96,7 @@ FROM applicants a
 JOIN loan_applications la ON a.id = la.applicant_id
 WHERE la.status = 'APPROVED'
 GROUP BY a.id, a.full_name
-ORDER BY total_approved DESC;
+ORDER BY total_approved DESC
 LIMIT 1;
 
 
