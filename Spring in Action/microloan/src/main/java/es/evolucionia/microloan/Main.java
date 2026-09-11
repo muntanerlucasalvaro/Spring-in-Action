@@ -12,7 +12,7 @@ public class Main {
     private static LoanRepository loanRepository = new JdbcLoanRepository(
             "jdbc:postgresql://localhost:5432/microloan", "postgres", "microloan");
     private static LoanService loanService = new LoanService(loanRepository);
-    private static LoanController loanController = new LoanController(loanRepository, loanService);
+    private static LoanController loanController = new LoanController(loanService);
 
     public static void main(String[] args) {
         System.out.println("MicroLoan starting...");
