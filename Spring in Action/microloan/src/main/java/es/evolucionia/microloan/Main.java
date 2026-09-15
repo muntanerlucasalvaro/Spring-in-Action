@@ -2,7 +2,6 @@ package es.evolucionia.microloan;
 
 import java.util.HashSet;
 import java.util.InputMismatchException;
-import java.util.Optional;
 import java.util.Set;
 import java.math.BigDecimal;
 import java.util.Scanner;
@@ -13,6 +12,7 @@ public class Main {
     private static LoanRepository loanRepository = new JdbcLoanRepository(
             "jdbc:postgresql://localhost:5432/microloan", "postgres", "microloan");
     private static LoanService loanService = new LoanService(loanRepository);
+    private static LoanController loanController = new LoanController(loanService);
 
     public static void main(String[] args) {
         System.out.println("MicroLoan starting...");
@@ -91,11 +91,13 @@ public class Main {
                         System.out.print("Enter purpose: ");
                         String purpose = sc.nextLine();
 
-                        LoanApplication application = new LoanApplication(loanRepository.findAll().size() + 1, found,
-                                amount, termMonths, purpose);
-                        loanRepository.save(application);
-
-                        System.out.println("Loan application created with ID: " + application.getId());
+                        try {
+                            LoanApplication application = loanController.createApplication(found, amount, termMonths,
+                                    purpose);
+                            System.out.println("Loan application created with ID: " + application.getId());
+                        } catch (InvalidLoanException e) {
+                            System.out.println(e.getMessage());
+                        }
                     } else {
                         System.out.println("Applicant not found");
                     }
@@ -106,18 +108,11 @@ public class Main {
                     int applicationId = sc.nextInt();
                     sc.nextLine();
 
-                    Optional<LoanApplication> resultSubmit = loanRepository.findById(applicationId);
-                    if (resultSubmit.isPresent()) {
-                        LoanApplication appToSubmit = resultSubmit.get();
-                        try {
-                            loanService.changeStatus(appToSubmit, LoanStatus.SUBMITTED);
-                            loanRepository.updateStatus(appToSubmit);
-                            System.out.println("Loan application submitted: " + appToSubmit.getId());
-                        } catch (InvalidLoanException e) {
-                            System.out.println(e.getMessage());
-                        }
-                    } else {
-                        System.out.println("Application not found");
+                    try {
+                        loanController.submitApplication(applicationId);
+                        System.out.println("Loan application submitted: " + applicationId);
+                    } catch (InvalidLoanException e) {
+                        System.out.println(e.getMessage());
                     }
                     break;
 
@@ -126,18 +121,11 @@ public class Main {
                     int applicationIdToReview = sc.nextInt();
                     sc.nextLine();
 
-                    Optional<LoanApplication> resultReview = loanRepository.findById(applicationIdToReview);
-                    if (resultReview.isPresent()) {
-                        LoanApplication appToReview = resultReview.get();
-                        try {
-                            loanService.changeStatus(appToReview, LoanStatus.UNDER_REVIEW);
-                            loanRepository.updateStatus(appToReview);
-                            System.out.println("Loan application under review: " + appToReview.getId());
-                        } catch (InvalidLoanException e) {
-                            System.out.println(e.getMessage());
-                        }
-                    } else {
-                        System.out.println("Application not found");
+                    try {
+                        loanController.reviewApplication(applicationIdToReview);
+                        System.out.println("Loan application under review: " + applicationIdToReview);
+                    } catch (InvalidLoanException e) {
+                        System.out.println(e.getMessage());
                     }
                     break;
 
@@ -146,26 +134,16 @@ public class Main {
                     int applicationIdToApprove = sc.nextInt();
                     sc.nextLine();
 
-                    Optional<LoanApplication> resultApprove = loanRepository.findById(applicationIdToApprove);
-                    if (resultApprove.isPresent()) {
-                        LoanApplication appToApprove = resultApprove.get();
-                        LoanStatus oldStatus = appToApprove.getStatus();
-                        try {
-                            loanService.changeStatus(appToApprove, LoanStatus.APPROVED);
+                    System.out.print("Simulate a failure to test rollback? (yes/no): ");
+                    boolean simulateFailure = sc.nextLine().equalsIgnoreCase("yes");
 
-                            System.out.print("Simulate a failure to test rollback? (yes/no): ");
-                            boolean simulateFailure = sc.nextLine().equalsIgnoreCase("yes");
-
-                            ((JdbcLoanRepository) loanRepository).approveWithHistory(appToApprove, oldStatus,
-                                    simulateFailure);
-                            System.out.println("Loan application approved: " + appToApprove.getId());
-                        } catch (InvalidLoanException e) {
-                            System.out.println(e.getMessage());
-                        } catch (RuntimeException e) {
-                            System.out.println("Transaction failed, nothing was saved: " + e.getMessage());
-                        }
-                    } else {
-                        System.out.println("Application not found");
+                    try {
+                        loanController.approveApplication(applicationIdToApprove, simulateFailure);
+                        System.out.println("Loan application approved: " + applicationIdToApprove);
+                    } catch (InvalidLoanException e) {
+                        System.out.println(e.getMessage());
+                    } catch (RuntimeException e) {
+                        System.out.println("Transaction failed, nothing was saved: " + e.getMessage());
                     }
                     break;
 
@@ -174,18 +152,11 @@ public class Main {
                     int applicationIdToReject = sc.nextInt();
                     sc.nextLine();
 
-                    Optional<LoanApplication> resultReject = loanRepository.findById(applicationIdToReject);
-                    if (resultReject.isPresent()) {
-                        LoanApplication appToReject = resultReject.get();
-                        try {
-                            loanService.changeStatus(appToReject, LoanStatus.REJECTED);
-                            loanRepository.updateStatus(appToReject);
-                            System.out.println("Loan application rejected: " + appToReject.getId());
-                        } catch (InvalidLoanException e) {
-                            System.out.println(e.getMessage());
-                        }
-                    } else {
-                        System.out.println("Application not found");
+                    try {
+                        loanController.rejectApplication(applicationIdToReject);
+                        System.out.println("Loan application rejected: " + applicationIdToReject);
+                    } catch (InvalidLoanException e) {
+                        System.out.println(e.getMessage());
                     }
                     break;
 

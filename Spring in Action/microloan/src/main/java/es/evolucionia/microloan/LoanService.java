@@ -10,7 +10,54 @@ public class LoanService {
         this.repository = repository;
     }
 
-    public void changeStatus(LoanApplication application, LoanStatus newStatus) {
+    public LoanApplication createApplication(Applicant applicant, BigDecimal amount, int termMonths, String purpose) {
+        // r1
+        if (amount.compareTo(new BigDecimal("500")) < 0 || amount.compareTo(new BigDecimal("15000")) > 0) {
+            throw new InvalidLoanException("Amount must be between 500 and 15000");
+        }
+        // r2
+        if (termMonths < 3 || termMonths > 36) {
+            throw new InvalidLoanException("Term months must be between 3 and 36");
+        }
+
+        int newId = repository.findAll().size() + 1;
+        LoanApplication application = new LoanApplication(newId, applicant, amount, termMonths, purpose);
+        repository.save(application);
+        return application;
+    }
+
+    public void submitApplication(int applicationId) {
+        LoanApplication application = repository.findById(applicationId)
+                .orElseThrow(() -> new InvalidLoanException("Application not found"));
+        changeStatus(application, LoanStatus.SUBMITTED);
+        repository.updateStatus(application);
+    }
+
+    public void reviewApplication(int applicationId) {
+        LoanApplication application = repository.findById(applicationId)
+                .orElseThrow(() -> new InvalidLoanException("Application not found"));
+        changeStatus(application, LoanStatus.UNDER_REVIEW);
+        repository.updateStatus(application);
+    }
+
+    public void approveApplication(int applicationId, boolean simulateFailure) {
+        LoanApplication application = repository.findById(applicationId)
+                .orElseThrow(() -> new InvalidLoanException("Application not found"));
+
+        LoanStatus oldStatus = application.getStatus();
+        changeStatus(application, LoanStatus.APPROVED);
+
+        ((JdbcLoanRepository) repository).approveWithHistory(application, oldStatus, simulateFailure);
+    }
+
+    public void rejectApplication(int applicationId) {
+        LoanApplication application = repository.findById(applicationId)
+                .orElseThrow(() -> new InvalidLoanException("Application not found"));
+        changeStatus(application, LoanStatus.REJECTED);
+        repository.updateStatus(application);
+    }
+
+    private void changeStatus(LoanApplication application, LoanStatus newStatus) {
 
         LoanStatus current = application.getStatus();
 
