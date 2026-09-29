@@ -9,7 +9,7 @@ import java.util.Scanner;
 public class Main {
 
     static Set<Applicant> applicants = new HashSet<>();
-    private static LoanRepository loanRepository = new JdbcLoanRepository(
+    static LoanRepository loanRepository = new JdbcLoanRepository(
             "jdbc:postgresql://localhost:5432/microloan", "postgres", "microloan");
     private static LoanService loanService = new LoanService(loanRepository);
     static LoanController loanController = new LoanController(loanService);
