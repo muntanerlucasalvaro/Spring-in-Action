@@ -23,7 +23,16 @@ public class JdbcLoanRepository implements LoanRepository {
         this.password = password;
     }
 
+    // Tomcat's classloader doesn't always auto-register JDBC drivers from
+    // WEB-INF/lib,
+    // so we force it explicitly here (this wasn't needed running as a plain jar)
+    // (FOR THIS PART I HAD TO USE AI FOR SOLVE THIS PROBLEM)
     private Connection getConnection() throws SQLException {
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("PostgreSQL driver not found", e);
+        }
         return DriverManager.getConnection(url, user, password);
     }
 

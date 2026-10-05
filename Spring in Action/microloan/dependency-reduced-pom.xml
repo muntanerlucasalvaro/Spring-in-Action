@@ -3,6 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>es.evolucionia.microloan</groupId>
   <artifactId>microloan</artifactId>
+  <packaging>war</packaging>
   <version>1.0-SNAPSHOT</version>
   <build>
     <plugins>
@@ -31,6 +32,14 @@
       </plugin>
     </plugins>
   </build>
+  <dependencies>
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <version>6.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
