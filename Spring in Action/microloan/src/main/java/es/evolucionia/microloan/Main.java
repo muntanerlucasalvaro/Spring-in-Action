@@ -8,11 +8,11 @@ import java.util.Scanner;
 
 public class Main {
 
-    private static Set<Applicant> applicants = new HashSet<>();
-    private static LoanRepository loanRepository = new JdbcLoanRepository(
+    static Set<Applicant> applicants = new HashSet<>();
+    static LoanRepository loanRepository = new JdbcLoanRepository(
             "jdbc:postgresql://localhost:5432/microloan", "postgres", "microloan");
     private static LoanService loanService = new LoanService(loanRepository);
-    private static LoanController loanController = new LoanController(loanService);
+    static LoanController loanController = new LoanController(loanService);
 
     public static void main(String[] args) {
         System.out.println("MicroLoan starting...");
@@ -71,15 +71,15 @@ public class Main {
                     applicantId = sc.nextInt();
                     sc.nextLine();
 
-                    Applicant found = null;
+                    Applicant foundApplicant = null;
                     for (Applicant a : applicants) {
                         if (a.getId() == applicantId) {
-                            found = a;
+                            foundApplicant = a;
                             break;
                         }
                     }
 
-                    if (found != null) {
+                    if (foundApplicant != null) {
                         System.out.print("Enter loan amount: ");
                         BigDecimal amount = sc.nextBigDecimal();
                         sc.nextLine();
@@ -92,7 +92,8 @@ public class Main {
                         String purpose = sc.nextLine();
 
                         try {
-                            LoanApplication application = loanController.createApplication(found, amount, termMonths,
+                            LoanApplication application = loanController.createApplication(foundApplicant, amount,
+                                    termMonths,
                                     purpose);
                             System.out.println("Loan application created with ID: " + application.getId());
                         } catch (InvalidLoanException e) {
