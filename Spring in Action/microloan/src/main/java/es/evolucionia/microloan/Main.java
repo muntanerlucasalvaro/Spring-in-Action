@@ -71,15 +71,15 @@ public class Main {
                     applicantId = sc.nextInt();
                     sc.nextLine();
 
-                    Applicant found = null;
+                    Applicant foundApplicant = null;
                     for (Applicant a : applicants) {
                         if (a.getId() == applicantId) {
-                            found = a;
+                            foundApplicant = a;
                             break;
                         }
                     }
 
-                    if (found != null) {
+                    if (foundApplicant != null) {
                         System.out.print("Enter loan amount: ");
                         BigDecimal amount = sc.nextBigDecimal();
                         sc.nextLine();
@@ -92,7 +92,8 @@ public class Main {
                         String purpose = sc.nextLine();
 
                         try {
-                            LoanApplication application = loanController.createApplication(found, amount, termMonths,
+                            LoanApplication application = loanController.createApplication(foundApplicant, amount,
+                                    termMonths,
                                     purpose);
                             System.out.println("Loan application created with ID: " + application.getId());
                         } catch (InvalidLoanException e) {

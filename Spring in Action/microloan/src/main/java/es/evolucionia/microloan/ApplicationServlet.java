@@ -46,8 +46,9 @@ public class ApplicationServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
 
-        if (pathInfo != null && pathInfo.endsWith("/approve")) {
-            handleApprove(resp, pathInfo);
+        // "/28/approve" -> action on an existing application
+        if (pathInfo != null && pathInfo.lastIndexOf('/') > 0) {
+            handleAction(resp, pathInfo);
             return;
         }
 
@@ -87,9 +88,11 @@ public class ApplicationServlet extends HttpServlet {
         }
     }
 
-    private void handleApprove(HttpServletResponse resp, String pathInfo) throws IOException {
-        // pathInfo looks like "/28/approve", we only need the number in the middle
-        String idPart = pathInfo.substring(1, pathInfo.indexOf("/approve"));
+    private void handleAction(HttpServletResponse resp, String pathInfo) throws IOException {
+        // pathInfo looks like "/28/approve": id in the middle, action at the end
+        int slash = pathInfo.lastIndexOf('/');
+        String idPart = pathInfo.substring(1, slash);
+        String action = pathInfo.substring(slash + 1);
 
         int id;
         try {
@@ -99,14 +102,42 @@ public class ApplicationServlet extends HttpServlet {
             return;
         }
 
+        String newStatus;
         try {
-            Main.loanController.approveApplication(id, false);
-            resp.setContentType("application/json");
-            resp.setStatus(HttpServletResponse.SC_OK);
-            mapper.writeValue(resp.getWriter(), Map.of("id", id, "status", "APPROVED"));
+            switch (action) {
+                case "submit" -> {
+                    Main.loanController.submitApplication(id);
+                    newStatus = "SUBMITTED";
+                }
+                case "review" -> {
+                    Main.loanController.reviewApplication(id);
+                    newStatus = "UNDER_REVIEW";
+                }
+                case "approve" -> {
+                    Main.loanController.approveApplication(id, false);
+                    newStatus = "APPROVED";
+                }
+                case "reject" -> {
+                    Main.loanController.rejectApplication(id);
+                    newStatus = "REJECTED";
+                }
+                default -> {
+                    writeError(resp, HttpServletResponse.SC_NOT_FOUND, "Unknown action");
+                    return;
+                }
+            }
         } catch (InvalidLoanException e) {
-            writeError(resp, HttpServletResponse.SC_CONFLICT, e.getMessage());
+            // a missing application is a 404, a blocked rule (R3/R4/R5) is a 409
+            int status = e.getMessage().equals("Application not found")
+                    ? HttpServletResponse.SC_NOT_FOUND
+                    : HttpServletResponse.SC_CONFLICT;
+            writeError(resp, status, e.getMessage());
+            return;
         }
+
+        resp.setContentType("application/json");
+        resp.setStatus(HttpServletResponse.SC_OK);
+        mapper.writeValue(resp.getWriter(), Map.of("id", id, "status", newStatus));
     }
 
     private void writeError(HttpServletResponse resp, int status, String message) throws IOException {
