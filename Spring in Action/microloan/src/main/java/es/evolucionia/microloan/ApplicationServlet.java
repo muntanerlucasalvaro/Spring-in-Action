@@ -1,6 +1,7 @@
 package es.evolucionia.microloan;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,8 +19,10 @@ public class ApplicationServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
+
+        // GET /applications or /applications?status=APPROVED -> list
         if (pathInfo == null || pathInfo.equals("/")) {
-            writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "Missing application id");
+            handleList(req, resp);
             return;
         }
 
@@ -53,6 +56,28 @@ public class ApplicationServlet extends HttpServlet {
         }
 
         handleCreate(req, resp);
+    }
+
+    private void handleList(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String statusParam = req.getParameter("status");
+
+        List<LoanApplication> applications;
+        if (statusParam == null) {
+            applications = Main.loanRepository.findAll();
+        } else {
+            LoanStatus status;
+            try {
+                status = LoanStatus.valueOf(statusParam.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "Invalid status");
+                return;
+            }
+            applications = Main.loanRepository.findByStatus(status);
+        }
+
+        resp.setContentType("application/json");
+        resp.setStatus(HttpServletResponse.SC_OK);
+        mapper.writeValue(resp.getWriter(), applications.stream().map(ApplicationResponse::from).toList());
     }
 
     private void handleCreate(HttpServletRequest req, HttpServletResponse resp) throws IOException {
